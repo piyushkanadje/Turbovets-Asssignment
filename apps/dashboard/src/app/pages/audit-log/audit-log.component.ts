@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, OrganizationService } from '../../core/services';
@@ -19,7 +18,7 @@ interface AuditLogEntry {
 @Component({
   selector: 'app-audit-log',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './audit-log.component.html',
   styleUrls: ['./audit-log.component.scss'],
 })

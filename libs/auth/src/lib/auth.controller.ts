@@ -64,9 +64,9 @@ export class AuthController {
     );
     return {
       ...user,
-      organizations: organizations.map((uo) => ({
-        id: uo.organizationId,
-        name: uo.organization?.name,
+      organizationMemberships: organizations.map((uo) => ({
+        organizationId: uo.organizationId,
+        organizationName: uo.organization?.name,
         role: uo.role,
       })),
     };

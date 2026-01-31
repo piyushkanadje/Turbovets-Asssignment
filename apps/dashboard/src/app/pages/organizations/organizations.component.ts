@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
@@ -16,7 +15,7 @@ import {
 @Component({
   selector: 'app-organizations',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './organizations.component.html',
   styleUrls: ['./organizations.component.scss'],
 })

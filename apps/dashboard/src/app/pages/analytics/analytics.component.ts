@@ -183,9 +183,9 @@ export class AnalyticsComponent implements OnInit {
   // Computed signals
   completionRate = signal(0);
 
-  // Chart types
-  barChartType: ChartType = 'bar';
-  doughnutChartType: ChartType = 'doughnut';
+  // Chart types - using 'as const' for literal type inference in template
+  barChartType = 'bar' as const;
+  doughnutChartType = 'doughnut' as const;
 
   // Bar Chart Configuration
   barChartData: ChartData<'bar'> = {
