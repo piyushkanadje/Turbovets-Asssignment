@@ -6,6 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   Index,
 } from 'typeorm';
 import { Organization } from './organization.entity';
@@ -52,4 +53,7 @@ export class Task {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
 }

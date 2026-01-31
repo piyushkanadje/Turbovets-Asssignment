@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -86,5 +87,20 @@ export class TasksController {
   async remove(@Param('id') id: string) {
     await this.tasksService.delete(id);
     return { message: 'Task deleted successfully' };
+  }
+
+  @Patch(':id/restore')
+  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard)
+  @OrgRoles(OrganizationRole.ADMIN)
+  async restore(@Param('id') id: string) {
+    const task = await this.tasksService.restoreTask(id);
+    return { message: 'Task restored successfully', task };
+  }
+
+  @Get('deleted')
+  @UseGuards(JwtAuthGuard, OrgRolesGuard)
+  @OrgRoles(OrganizationRole.ADMIN)
+  async findDeleted(@Query('organizationId') organizationId: string) {
+    return this.tasksService.findDeleted(organizationId);
   }
 }
