@@ -3,7 +3,7 @@
  * This is only a minimal backend to get started.
  */
 
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
@@ -12,6 +12,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+
+  // Enable global validation pipe for DTO validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip properties that don't have decorators
+      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are present
+      transform: true, // Automatically transform payloads to DTO instances
+      transformOptions: {
+        enableImplicitConversion: true, // Enable implicit type conversion
+      },
+    })
+  );
 
   // Swagger Configuration
   const config = new DocumentBuilder()

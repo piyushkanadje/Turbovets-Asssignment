@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-register',
@@ -18,10 +19,11 @@ import { AuthService } from '../../core/services';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Password visibility toggles
   showPassword = signal(false);
@@ -29,6 +31,9 @@ export class RegisterComponent {
 
   // Track which fields have been touched for progressive disclosure
   currentStep = signal(1);
+
+  // Signal to track password value for computed properties
+  private passwordValue = signal('');
 
   registerForm: FormGroup = this.fb.group(
     {
@@ -48,9 +53,18 @@ export class RegisterComponent {
     { validators: this.passwordMatchValidator }
   );
 
-  // Password strength indicators
+  ngOnInit(): void {
+    // Subscribe to password changes and update the signal
+    this.registerForm.get('password')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        this.passwordValue.set(value || '');
+      });
+  }
+
+  // Password strength indicators - now reactive with signal
   passwordStrength = computed(() => {
-    const password = this.registerForm.get('password')?.value || '';
+    const password = this.passwordValue();
     let strength = 0;
     
     if (password.length >= 8) strength++;
@@ -79,11 +93,16 @@ export class RegisterComponent {
     return 'bg-green-500';
   });
 
-  // Individual requirement checks for the password
-  hasMinLength = computed(() => (this.registerForm.get('password')?.value || '').length >= 8);
-  hasUppercase = computed(() => /[A-Z]/.test(this.registerForm.get('password')?.value || ''));
-  hasLowercase = computed(() => /[a-z]/.test(this.registerForm.get('password')?.value || ''));
-  hasNumber = computed(() => /[0-9]/.test(this.registerForm.get('password')?.value || ''));
+  // Individual requirement checks for the password - now reactive
+  hasMinLength = computed(() => this.passwordValue().length >= 8);
+  hasUppercase = computed(() => /[A-Z]/.test(this.passwordValue()));
+  hasLowercase = computed(() => /[a-z]/.test(this.passwordValue()));
+  hasNumber = computed(() => /[0-9]/.test(this.passwordValue()));
+
+  // Expose password value for template
+  get currentPasswordValue(): string {
+    return this.passwordValue();
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update(v => !v);
