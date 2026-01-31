@@ -3,6 +3,8 @@ const { join } = require('path');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Enable class-based dark mode (toggled via 'dark' class on <html>)
+  darkMode: 'class',
   content: [
     join(__dirname, 'src/**/!(*.stories|*.spec).{ts,html}'),
     ...createGlobPatternsForDependencies(__dirname),

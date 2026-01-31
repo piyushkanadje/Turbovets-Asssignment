@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -6,10 +6,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import {
   AuthService,
   TaskService,
   OrganizationService,
+  ShortcutService,
 } from '../../core/services';
 import type { CreateTaskDto } from '../../core/services';
 import { TaskStatus, TaskPriority, ITask, OrganizationRole } from '@task-manager/data/frontend';
@@ -21,11 +23,13 @@ import { TaskStatus, TaskPriority, ITask, OrganizationRole } from '@task-manager
   templateUrl: './tasks.component.html',
   styleUrls: ['./tasks.component.scss'],
 })
-export class TasksComponent implements OnInit {
+export class TasksComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
   readonly taskService = inject(TaskService);
   readonly organizationService = inject(OrganizationService);
+  readonly shortcutService = inject(ShortcutService);
   private readonly fb = inject(FormBuilder);
+  private readonly destroy$ = new Subject<void>();
 
   readonly TaskStatus = TaskStatus;
   readonly TaskPriority = TaskPriority;
@@ -56,6 +60,29 @@ export class TasksComponent implements OnInit {
 
   ngOnInit(): void {
     this.taskService.loadTasks();
+    
+    // Ctrl/Cmd + N → Open New Task Modal
+    this.shortcutService.newTask$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.canCreateTasks() && !this.showCreateModal()) {
+          this.showCreateModal.set(true);
+        }
+      });
+    
+    // Escape → Close Modal
+    this.shortcutService.escape$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.showCreateModal()) {
+          this.closeModal();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   editTask(task: ITask): void {

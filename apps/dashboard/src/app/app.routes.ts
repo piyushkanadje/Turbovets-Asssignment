@@ -57,6 +57,13 @@ export const appRoutes: Route[] = [
           ),
       },
       {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./pages/analytics/analytics.component').then(
+            (m) => m.AnalyticsComponent
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./pages/settings/settings.component').then(
