@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService, OrganizationService } from '../../core/services';
-import { OrganizationRole } from '@task-manager/data';
+import { OrganizationRole } from '@task-manager/data/frontend';
 
 @Component({
   selector: 'app-dashboard-layout',

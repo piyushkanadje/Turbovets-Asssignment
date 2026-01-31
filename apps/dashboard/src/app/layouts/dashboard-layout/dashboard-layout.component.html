@@ -32,7 +32,7 @@
         <label class="text-xs font-semibold text-indigo-200 uppercase tracking-wider">
           Organization
         </label>
-        @if (authService.userOrganizations()?.length) {
+        @if (authService.userOrganizations().length) {
           <div class="mt-2 space-y-1">
             @for (org of authService.userOrganizations(); track org.organizationId) {
               <button

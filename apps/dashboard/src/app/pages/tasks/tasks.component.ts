@@ -12,7 +12,7 @@ import {
   OrganizationService,
 } from '../../core/services';
 import type { CreateTaskDto } from '../../core/services';
-import { TaskStatus, TaskPriority, ITask, OrganizationRole } from '@task-manager/data';
+import { TaskStatus, TaskPriority, ITask, OrganizationRole } from '@task-manager/data/frontend';
 
 @Component({
   selector: 'app-tasks',
