@@ -18,7 +18,8 @@ export class TaskOrgGuard implements CanActivate {
       return true;
     }
 
-    const task = await this.tasksService.findById(taskId);
+
+    const task = await this.tasksService.findByIdWithDeleted(taskId);
 
     if (!task) {
       throw new NotFoundException(`Task with ID ${taskId} not found`);
