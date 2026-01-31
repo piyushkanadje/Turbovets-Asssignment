@@ -9,6 +9,8 @@ import {
   Index,
 } from 'typeorm';
 import { Organization } from './organization.entity';
+import { User } from './user.entity';
+import { TaskStatus } from '../enums/task-status.enum';
 
 @Entity('tasks')
 @Index('idx_task_org', ['organizationId'])
@@ -21,6 +23,20 @@ export class Task {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: TaskStatus,
+    default: TaskStatus.TODO,
+  })
+  status: TaskStatus;
+
+  @Column({ name: 'assignee_id', type: 'uuid', nullable: true })
+  assigneeId: string | null;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'assignee_id' })
+  assignee: User | null;
 
   @Column({ name: 'organization_id', type: 'uuid' })
   organizationId: string;

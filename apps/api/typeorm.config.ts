@@ -4,6 +4,7 @@ import { User } from '../../libs/data/src/lib/entities/user.entity';
 import { Organization } from '../../libs/data/src/lib/entities/organization.entity';
 import { UserOrganization } from '../../libs/data/src/lib/entities/user-organization.entity';
 import { Task } from '../../libs/data/src/lib/entities/task.entity';
+import { AuditLog } from '../../libs/data/src/lib/entities/audit-log.entity';
 
 config({ path: '.env' });
 
@@ -14,7 +15,7 @@ export default new DataSource({
   username: process.env.DATABASE_USER || 'admin',
   password: process.env.DATABASE_PASSWORD || 'password123',
   database: process.env.DATABASE_NAME || 'task_db',
-  entities: [User, Organization, UserOrganization, Task],
+  entities: [User, Organization, UserOrganization, Task, AuditLog],
   migrations: ['apps/api/src/migrations/*.ts'],
   migrationsTableName: 'migrations',
 });
