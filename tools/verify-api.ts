@@ -10,6 +10,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { Client } from 'pg';
 
 // Chalk v5 is ESM-only, so we use ANSI codes for CommonJS compatibility
 const colors = {
@@ -173,67 +174,50 @@ async function setupUsers(): Promise<void> {
 }
 
 async function setupOrganization(): Promise<void> {
-  log(chalk.yellow('\n🏢 Setting up organization and roles...'));
-
-  // Since there's no organization management API, we need to use raw SQL
-  // For this test, we'll need to create organization directly via the database
-  // OR we can skip this and use a pre-existing organization
-
-  // For now, let's check if there's a way to create orgs via API
-  // If not, we'll document that this needs manual setup
-
-  log(chalk.gray('  ℹ️  Note: Organization setup requires direct database access.'));
-  log(chalk.gray('  ℹ️  Please ensure you have run the setup SQL below before testing:\n'));
-
-  const setupSQL = `
--- Run this SQL to set up test data:
--- 1. Create organization
-INSERT INTO organizations (id, name, created_at, updated_at)
-VALUES ('00000000-0000-0000-0000-000000000001', 'TechCorp', NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
-
--- 2. After registering users via API, run this to assign roles:
--- Replace the UUIDs with actual user IDs from registration
-
--- For OWNER (the first registered user)
--- INSERT INTO user_organizations (id, user_id, organization_id, role, created_at)
--- VALUES (gen_random_uuid(), '<owner-user-id>', '00000000-0000-0000-0000-000000000001', 'OWNER', NOW());
-
--- For ADMIN
--- INSERT INTO user_organizations (id, user_id, organization_id, role, created_at)
--- VALUES (gen_random_uuid(), '<admin-user-id>', '00000000-0000-0000-0000-000000000001', 'ADMIN', NOW());
-
--- For VIEWER
--- INSERT INTO user_organizations (id, user_id, organization_id, role, created_at)
--- VALUES (gen_random_uuid(), '<viewer-user-id>', '00000000-0000-0000-0000-000000000001', 'VIEWER', NOW());
-`;
+  log(chalk.yellow('\n🏢 Setting up organization and roles via database...'));
 
   // Use a fixed organization ID for testing
   state.organizationId = '00000000-0000-0000-0000-000000000001';
 
-  log(chalk.cyan(setupSQL));
+  // Connect directly to database to set up test data
+  const dbClient = new Client({
+    host: process.env.DATABASE_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || '5432', 10),
+    user: process.env.DATABASE_USER || 'admin',
+    password: process.env.DATABASE_PASSWORD || 'password123',
+    database: process.env.DATABASE_NAME || 'task_db',
+  });
 
-  log(chalk.yellow('\n  📋 User IDs for role assignment:'));
-  log(chalk.white(`     Owner:  ${state.ownerId}`));
-  log(chalk.white(`     Admin:  ${state.adminId}`));
-  log(chalk.white(`     Viewer: ${state.viewerId}`));
-  log(chalk.white(`     Org ID: ${state.organizationId}`));
+  try {
+    await dbClient.connect();
+    log(chalk.green('  ✓ Connected to database'));
 
-  // Generate ready-to-run SQL
-  log(chalk.yellow('\n  📋 Ready-to-run SQL (copy & paste):'));
-  const readySQL = `
-INSERT INTO organizations (id, name, created_at, updated_at)
-VALUES ('${state.organizationId}', 'TechCorp', NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
+    // Create organization
+    await dbClient.query(`
+      INSERT INTO organizations (id, name, created_at, updated_at)
+      VALUES ($1, 'TechCorp', NOW(), NOW())
+      ON CONFLICT (id) DO NOTHING
+    `, [state.organizationId]);
+    log(chalk.green('  ✓ Created organization "TechCorp"'));
 
-INSERT INTO user_organizations (id, user_id, organization_id, role, created_at)
-VALUES
-  (gen_random_uuid(), '${state.ownerId}', '${state.organizationId}', 'OWNER', NOW()),
-  (gen_random_uuid(), '${state.adminId}', '${state.organizationId}', 'ADMIN', NOW()),
-  (gen_random_uuid(), '${state.viewerId}', '${state.organizationId}', 'VIEWER', NOW())
-ON CONFLICT DO NOTHING;
-`;
-  log(chalk.gray(readySQL));
+    // Assign roles to users
+    await dbClient.query(`
+      INSERT INTO user_organizations (id, user_id, organization_id, role, created_at)
+      VALUES
+        (gen_random_uuid(), $1, $4, 'OWNER', NOW()),
+        (gen_random_uuid(), $2, $4, 'ADMIN', NOW()),
+        (gen_random_uuid(), $3, $4, 'VIEWER', NOW())
+      ON CONFLICT DO NOTHING
+    `, [state.ownerId, state.adminId, state.viewerId, state.organizationId]);
+    log(chalk.green('  ✓ Assigned roles: Owner, Admin, Viewer'));
+
+    await dbClient.end();
+    log(chalk.green('  ✓ Database setup complete\n'));
+  } catch (error) {
+    log(chalk.red(`  ✗ Database setup failed: ${error}`));
+    await dbClient.end().catch(() => {});
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -443,14 +427,6 @@ async function main(): Promise<void> {
     // Run all scenarios
     await setupUsers();
     await setupOrganization();
-
-    console.log(chalk.yellow('\n⏳ Please run the SQL above to set up organizations, then press Enter...'));
-    console.log(chalk.gray('   (Or if already set up, just press Enter)\n'));
-
-    // Wait for user input
-    await new Promise<void>((resolve) => {
-      process.stdin.once('data', () => resolve());
-    });
 
     await testTaskOperations();
     await testSecurityChecks();

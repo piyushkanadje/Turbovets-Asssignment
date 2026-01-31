@@ -61,9 +61,15 @@ export class TasksController {
     @Request() req: AuthenticatedRequest
   ) {
     if (req.userOrgRole === OrganizationRole.VIEWER) {
+      // Fields that viewers are allowed to update
       const allowedKeys = ['status'];
+      // Fields injected by guards (not user input)
+      const systemKeys = ['organizationId'];
+
       const updateKeys = Object.keys(updateTaskDto).filter(
-        (k) => updateTaskDto[k as keyof UpdateTaskDto] !== undefined
+        (k) =>
+          updateTaskDto[k as keyof UpdateTaskDto] !== undefined &&
+          !systemKeys.includes(k)
       );
 
       if (updateKeys.some((k) => !allowedKeys.includes(k))) {
