@@ -46,11 +46,18 @@ export class AuthService {
       .getOne();
   }
 
-  async createUser(email: string, password: string): Promise<User> {
+  async createUser(
+    email: string,
+    password: string,
+    firstName?: string,
+    lastName?: string
+  ): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
+      firstName,
+      lastName,
     });
     return this.userRepository.save(user);
   }
@@ -123,7 +130,12 @@ export class AuthService {
   /**
    * Registers a new user and returns JWT token
    */
-  async register(email: string, password: string): Promise<LoginResponse> {
+  async register(
+    email: string,
+    password: string,
+    firstName?: string,
+    lastName?: string
+  ): Promise<LoginResponse> {
     // Check if user already exists
     const existingUser = await this.findUserByEmail(email);
     if (existingUser) {
@@ -131,7 +143,7 @@ export class AuthService {
     }
 
     // Create new user (password hashing handled by createUser)
-    const newUser = await this.createUser(email, password);
+    const newUser = await this.createUser(email, password, firstName, lastName);
 
     // Auto-login after registration
     return this.login(newUser);

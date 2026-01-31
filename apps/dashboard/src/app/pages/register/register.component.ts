@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -23,8 +23,17 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
+  // Password visibility toggles
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
+
+  // Track which fields have been touched for progressive disclosure
+  currentStep = signal(1);
+
   registerForm: FormGroup = this.fb.group(
     {
+      firstName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
+      lastName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
       email: ['', [Validators.required, Validators.email]],
       password: [
         '',
@@ -39,12 +48,60 @@ export class RegisterComponent {
     { validators: this.passwordMatchValidator }
   );
 
+  // Password strength indicators
+  passwordStrength = computed(() => {
+    const password = this.registerForm.get('password')?.value || '';
+    let strength = 0;
+    
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    
+    return strength;
+  });
+
+  passwordStrengthLabel = computed(() => {
+    const strength = this.passwordStrength();
+    if (strength === 0) return '';
+    if (strength <= 2) return 'Weak';
+    if (strength <= 3) return 'Fair';
+    if (strength <= 4) return 'Good';
+    return 'Strong';
+  });
+
+  passwordStrengthColor = computed(() => {
+    const strength = this.passwordStrength();
+    if (strength <= 2) return 'bg-red-500';
+    if (strength <= 3) return 'bg-yellow-500';
+    if (strength <= 4) return 'bg-blue-500';
+    return 'bg-green-500';
+  });
+
+  // Individual requirement checks for the password
+  hasMinLength = computed(() => (this.registerForm.get('password')?.value || '').length >= 8);
+  hasUppercase = computed(() => /[A-Z]/.test(this.registerForm.get('password')?.value || ''));
+  hasLowercase = computed(() => /[a-z]/.test(this.registerForm.get('password')?.value || ''));
+  hasNumber = computed(() => /[0-9]/.test(this.registerForm.get('password')?.value || ''));
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update(v => !v);
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword.update(v => !v);
+  }
+
   onSubmit(): void {
+    // Mark all fields as touched to trigger validation display
+    this.registerForm.markAllAsTouched();
+    
     if (this.registerForm.invalid) return;
 
-    const { email, password } = this.registerForm.value;
+    const { firstName, lastName, email, password } = this.registerForm.value;
 
-    this.authService.register(email, password).subscribe({
+    this.authService.register(firstName, lastName, email, password).subscribe({
       next: () => {
         this.router.navigate(['/dashboard']);
       },
@@ -52,6 +109,11 @@ export class RegisterComponent {
         // Error is handled in the service
       },
     });
+  }
+
+  // Clear error when user starts typing again
+  onFieldFocus(): void {
+    this.authService.clearError();
   }
 
   private passwordStrengthValidator(
@@ -74,5 +136,41 @@ export class RegisterComponent {
     const confirmPassword = group.get('confirmPassword')?.value;
 
     return password === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  // Helper methods for template
+  getFieldError(fieldName: string): string | null {
+    const control = this.registerForm.get(fieldName);
+    if (!control || !control.errors || !control.touched) return null;
+
+    if (control.errors['required']) {
+      const labels: Record<string, string> = {
+        firstName: 'First name',
+        lastName: 'Last name',
+        email: 'Email',
+        password: 'Password',
+        confirmPassword: 'Password confirmation'
+      };
+      return `${labels[fieldName]} is required`;
+    }
+    if (control.errors['email']) return 'Please enter a valid email address';
+    if (control.errors['minlength']) {
+      if (fieldName === 'password') return 'Password must be at least 8 characters';
+      return 'This field is too short';
+    }
+    if (control.errors['passwordStrength']) {
+      return 'Password must include uppercase, lowercase, and a number';
+    }
+    return null;
+  }
+
+  isFieldValid(fieldName: string): boolean {
+    const control = this.registerForm.get(fieldName);
+    return !!control && control.valid && control.touched;
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const control = this.registerForm.get(fieldName);
+    return !!control && control.invalid && control.touched;
   }
 }

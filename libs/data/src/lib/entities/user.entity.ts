@@ -21,6 +21,12 @@ export class User {
   @Column({ type: 'varchar', length: 255, select: false })
   password!: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  firstName?: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  lastName?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

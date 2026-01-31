@@ -82,12 +82,22 @@ export class AuthService {
   /**
    * Register a new user
    */
-  register(email: string, password: string): Observable<RegisterResponse> {
+  register(
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string
+  ): Observable<RegisterResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
     return this.http
-      .post<RegisterResponse>(`${this.API_URL}/register`, { email, password })
+      .post<RegisterResponse>(`${this.API_URL}/register`, {
+        firstName,
+        lastName,
+        email,
+        password,
+      })
       .pipe(
         tap((response) => {
           this.setToken(response.access_token);
@@ -95,7 +105,11 @@ export class AuthService {
         }),
         catchError((error) => {
           this._isLoading.set(false);
-          this._error.set(error.error?.message || 'Registration failed');
+          // Handle validation errors from backend
+          const message = Array.isArray(error.error?.message)
+            ? error.error.message[0]
+            : error.error?.message || 'Registration failed';
+          this._error.set(message);
           throw error;
         })
       );
