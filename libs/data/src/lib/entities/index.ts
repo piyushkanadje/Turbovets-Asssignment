@@ -4,3 +4,6 @@ export * from './user-organization.entity';
 export * from './task.entity';
 export * from './audit-log.entity';
 export * from './invitation.entity';
+export * from './permission.entity';
+export * from './role-permission.entity';
+export * from './user-permission.entity';
