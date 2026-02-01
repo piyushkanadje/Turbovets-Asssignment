@@ -10,6 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService, LoginResponse } from './auth.service';
+import { PermissionsService } from './permissions.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OrgRolesGuard, OrgRoles } from './guards/org-roles.guard';
@@ -28,7 +29,10 @@ interface AuthenticatedRequest extends Request {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly permissionsService: PermissionsService
+  ) {}
 
   /**
    * Login endpoint - validates credentials and returns JWT
@@ -172,5 +176,33 @@ export class AuthController {
       organizationId: req.organizationId,
       userRole: req.userOrgRole,
     };
+  }
+
+  /**
+   * Get user permissions for an organization
+   * GET /auth/permissions/:organizationId
+   */
+  @Get('permissions/:organizationId')
+  @UseGuards(JwtAuthGuard)
+  async getPermissions(
+    @Request() req: AuthenticatedRequest,
+    @Param('organizationId') organizationId: string
+  ) {
+    const permissions = await this.permissionsService.getUserPermissions(
+      req.user.id,
+      organizationId
+    );
+    return { permissions };
+  }
+
+  /**
+   * Get all available permissions in the system
+   * GET /auth/permissions
+   */
+  @Get('all-permissions')
+  @UseGuards(JwtAuthGuard)
+  async getAllPermissions() {
+    const permissions = await this.permissionsService.getAllPermissions();
+    return { permissions };
   }
 }

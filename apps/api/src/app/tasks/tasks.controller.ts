@@ -29,8 +29,15 @@ import {
   JwtAuthGuard,
   OrgRolesGuard,
   OrgRoles,
+  PermissionsGuard,
+  RequirePermission,
 } from '@task-manager/auth';
-import { OrganizationRole, Task } from '@task-manager/data';
+import {
+  OrganizationRole,
+  Task,
+  PermissionResource,
+  PermissionAction,
+} from '@task-manager/data';
 import { AuditInterceptor } from '../audit/audit.interceptor';
 
 interface AuthenticatedRequest extends Request {
@@ -47,8 +54,9 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.ADMIN)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.CREATE)
   @ApiOperation({ summary: 'Create a new task' })
   @ApiResponse({ status: 201, description: 'Task created successfully', type: Task })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing JWT token' })
@@ -62,8 +70,9 @@ export class TasksController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.VIEWER)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.READ)
   @ApiOperation({ summary: 'Get all tasks for an organization' })
   @ApiQuery({ name: 'organizationId', description: 'Organization UUID', required: true })
   @ApiResponse({ status: 200, description: 'List of tasks retrieved successfully', type: [Task] })
@@ -74,8 +83,9 @@ export class TasksController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.VIEWER)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Update a task' })
   @ApiParam({ name: 'id', description: 'Task UUID' })
   @ApiResponse({ status: 200, description: 'Task updated successfully', type: Task })
@@ -108,8 +118,9 @@ export class TasksController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.ADMIN)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.DELETE)
   @ApiOperation({ summary: 'Soft delete a task' })
   @ApiParam({ name: 'id', description: 'Task UUID' })
   @ApiResponse({ status: 200, description: 'Task deleted successfully' })
@@ -122,8 +133,9 @@ export class TasksController {
   }
 
   @Patch(':id/restore')
-  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, TaskOrgGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.ADMIN)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.RESTORE)
   @ApiOperation({ summary: 'Restore a soft-deleted task' })
   @ApiParam({ name: 'id', description: 'Task UUID' })
   @ApiResponse({ status: 200, description: 'Task restored successfully', type: Task })
@@ -136,8 +148,9 @@ export class TasksController {
   }
 
   @Get('deleted')
-  @UseGuards(JwtAuthGuard, OrgRolesGuard)
+  @UseGuards(JwtAuthGuard, OrgRolesGuard, PermissionsGuard)
   @OrgRoles(OrganizationRole.ADMIN)
+  @RequirePermission(PermissionResource.TASK, PermissionAction.READ)
   @ApiOperation({ summary: 'Get all soft-deleted tasks for an organization' })
   @ApiQuery({ name: 'organizationId', description: 'Organization UUID', required: true })
   @ApiResponse({ status: 200, description: 'List of deleted tasks retrieved successfully', type: [Task] })

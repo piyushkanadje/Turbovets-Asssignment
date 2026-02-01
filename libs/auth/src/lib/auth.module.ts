@@ -6,7 +6,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { User, UserOrganization } from '@task-manager/data';
+import { PermissionsService } from './permissions.service';
+import {
+  User,
+  UserOrganization,
+  Permission,
+  RolePermission,
+  UserPermission,
+} from '@task-manager/data';
 
 // Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -17,10 +24,17 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { OrgRolesGuard } from './guards/org-roles.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { PermissionsGuard } from './guards/permissions.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserOrganization]),
+    TypeOrmModule.forFeature([
+      User,
+      UserOrganization,
+      Permission,
+      RolePermission,
+      UserPermission,
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -39,6 +53,7 @@ import { RolesGuard } from './guards/roles.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    PermissionsService,
     // Strategies
     JwtStrategy,
     LocalStrategy,
@@ -47,13 +62,16 @@ import { RolesGuard } from './guards/roles.guard';
     LocalAuthGuard,
     OrgRolesGuard,
     RolesGuard,
+    PermissionsGuard,
   ],
   exports: [
     AuthService,
+    PermissionsService,
     JwtAuthGuard,
     LocalAuthGuard,
     OrgRolesGuard,
     RolesGuard,
+    PermissionsGuard,
     JwtModule,
     PassportModule,
   ],

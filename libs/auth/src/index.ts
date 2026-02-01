@@ -4,8 +4,9 @@ export * from './lib/auth.module';
 // Controller
 export * from './lib/auth.controller';
 
-// Service
+// Services
 export * from './lib/auth.service';
+export * from './lib/permissions.service';
 
 // Guards
 export * from './lib/guards';

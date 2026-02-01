@@ -1,0 +1,7 @@
+export enum PermissionResource {
+  TASK = 'TASK',
+  ORGANIZATION = 'ORGANIZATION',
+  MEMBER = 'MEMBER',
+  AUDIT_LOG = 'AUDIT_LOG',
+  INVITATION = 'INVITATION',
+}

@@ -8,3 +8,5 @@ export type {
 } from './organization.service';
 export { ThemeService, type ThemeMode } from './theme.service';
 export { ShortcutService, type ShortcutEvent } from './shortcut.service';
+export { PermissionsService } from './permissions.service';
+export type { EffectivePermission, PermissionKey } from './permissions.service';
