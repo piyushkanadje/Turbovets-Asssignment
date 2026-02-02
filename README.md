@@ -942,3 +942,43 @@ RATE_LIMIT_MAX=100
 
 ---
 
+## 🔮 Future Considerations
+
+### Granular Permission System (Implemented)
+
+The system now supports fine-grained permissions beyond role-based access:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PERMISSION ARCHITECTURE                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┐       ┌──────────────────────────┐       ┌──────────────────┐
+│   PERMISSION     │       │    ROLE_PERMISSION       │       │ USER_PERMISSION  │
+├──────────────────┤       ├──────────────────────────┤       ├──────────────────┤
+│ id (PK)          │       │ id (PK)                  │       │ id (PK)          │
+│ name             │◄──────│ permissionId (FK)        │       │ userId (FK)      │
+│ description      │       │ role (OWNER/ADMIN/VIEWER)│       │ organizationId   │
+│ resource         │       └──────────────────────────┘       │ permissionId (FK)│
+│ action           │                                          │ granted (bool)   │
+└──────────────────┘                                          └──────────────────┘
+                                                              (User-level overrides)
+```
+
+**Resources:** `TASK`, `ORGANIZATION`, `MEMBER`, `AUDIT_LOG`, `INVITATION`
+
+**Actions:** `CREATE`, `READ`, `UPDATE`, `DELETE`, `RESTORE`, `INVITE`, `MANAGE`
+
+**Usage:**
+```typescript
+// Backend - granular permission check
+@RequirePermission(PermissionResource.TASK, PermissionAction.CREATE)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+async createTask() { }
+
+// Frontend - reactive permission check
+canCreate = this.permissionsService.canCreateTasks; // Signal<boolean>
+```
+
+
+
